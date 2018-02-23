@@ -1,3 +1,6 @@
 # ScaryRoomGame
 CS196 illinois project.
-oof
+This is weizhe tang.
+Cen Zhang
+hello this is andrew.
+Jieming Gong
