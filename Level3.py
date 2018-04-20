@@ -9,7 +9,7 @@ FPS = 60
 # color
 white = (255, 255, 255)
 black = (0, 0, 0)
-darkred = (188, 0 ,0)
+darkred = (100, 0 ,0)
 red = (255,0,0)
 
 
@@ -65,15 +65,15 @@ class Enemy(pygame.sprite.Sprite):
         self.image.set_colorkey(black)
         self.rect = self.image.get_rect()
         self.rect.center = (width / 2, height / 2)
-        self.y_speed = 6
+        self.y_speed = random.randrange(1,6)
 
     def update(self):
-        self.rect.x += 6
+        self.rect.x += random.randrange(2,6)
         self.rect.y += self.y_speed
         if self.rect.bottom > height - 200:
-            self.y_speed = -6
+            self.y_speed = -self.y_speed
         if self.rect.top < 200:
-            self.y_speed = 6
+            self.y_speed = -self.y_speed
         if self.rect.left > width:
             self.rect.right = 0
 
@@ -95,8 +95,8 @@ class Ghost(pygame.sprite.Sprite):
         self.rect.y += self.speedy
         if self.rect.top > height + 10 or self.rect.left < -25 or self.rect.right > width + 20:
             self.rect.x = random.randrange(width - self.rect.width)
-            self.rect.y = random.randrange(-100,40)
-            self.speedy = random.randrange(3,8)
+            self.rect.y = random.randrange(-100,-40)
+            self.speedy = random.randrange(1,8)
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -124,19 +124,27 @@ screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("level 3")
 clock = pygame.time.Clock()
 
+background = pygame.image.load(os.path.join(img_folder,"back2.png")).convert()
+background = pygame.transform.scale(background,(500,500))
+background_rect = background.get_rect()
+
+
 all_sprites = pygame.sprite.Group()
 bullets = pygame.sprite.Group()
-player = Player()
-enemy = Enemy()
-all_sprites.add(player)
-all_sprites.add(enemy)
-
+Enemys = pygame.sprite.Group()
 Ghosts = pygame.sprite.Group()
-Ghost.add(enemy)
-for i in range(8):
+player = Player()
+all_sprites.add(player)
+
+for i in range(10):
     m = Ghost()
     Ghosts.add(m)
     all_sprites.add(m)
+
+for j in range(3):
+    k = Enemy()
+    Enemys.add(k)
+    all_sprites.add(k)
 # game loop
 
 running = True
@@ -160,12 +168,19 @@ while running:
         m = Ghost()
         all_sprites.add(m)
         Ghosts.add(m)
+    hits2 = pygame.sprite.groupcollide(Enemys,bullets,True,True)
+    for hit in hits2:
+        l = Enemy()
+        all_sprites.add(l)
+        Enemys.add(l)
+
     #check collision
     #hits1 = pygame.sprite.spritecollide(player,Ghosts,False)
     #if hits1:
         #running = False
 
     screen.fill(darkred)
+    screen.blit(background,background_rect)
     all_sprites.draw(screen)
 
     pygame.display.flip()
