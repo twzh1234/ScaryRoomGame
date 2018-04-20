@@ -102,8 +102,10 @@ class Ghost(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((10,10))
-        self.image.fill((255,255,0))
+        #self.image = pygame.Surface((10,10))
+        #self.image.fill((255,255,0))
+        self.image = Bullets
+        self.image.set_colorkey(black)
         self.rect = self.image.get_rect()
         self.rect.bottom = y
         self.rect.centerx = x
@@ -127,6 +129,7 @@ clock = pygame.time.Clock()
 background = pygame.image.load(os.path.join(img_folder,"back2.png")).convert()
 background = pygame.transform.scale(background,(500,500))
 background_rect = background.get_rect()
+Bullets = pygame.image.load(os.path.join(img_folder, "laserGreen.png")).convert()
 
 
 all_sprites = pygame.sprite.Group()
