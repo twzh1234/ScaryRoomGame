@@ -19,7 +19,7 @@ class Boss(pygame.sprite.Sprite):
         self.rect.topleft = [x, y]
 
     def update(self, time_passed_seconds=0.0):
-        self.move_curve(time_passed_seconds)
+        self.move_circle(time_passed_seconds)
 
     def move_line(self, time_passed_seconds):
         self.rect.move_ip(10, 20 * time_passed_seconds)
