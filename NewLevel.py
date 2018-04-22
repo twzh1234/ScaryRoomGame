@@ -81,10 +81,10 @@ while done is False:
 
     screen.fill(GREEN)
 
-    player.update(time_passed_seconds)
+
 
     all_things_list.draw((screen))
-
+    player.update(time_passed_seconds)
     clock.tick(50)
 
     pygame.display.flip()
