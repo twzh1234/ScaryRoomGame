@@ -17,6 +17,22 @@ red = (255,0,0)
 game_folder = os.path.dirname(__file__)
 img_folder = os.path.join(game_folder,"image")
 
+
+def newGhost():
+    m = Ghost()
+    all_sprites.add(m)
+    Ghosts.add(m)
+
+def draw_shield_bar(surface,x,y,pect):
+    if pect < 0:
+        pect = 0
+    BAR_Length = 100
+    BAR_Height = 10
+    fill = (pect/100)*BAR_Length
+    outline_rect = pygame.Rect(x,y,BAR_Length,BAR_Height)
+    fill_rect = pygame.Rect(x,y,fill,BAR_Height)
+    pygame.draw.rect(surface,red,fill_rect)
+    pygame.draw.rect(surface,white,outline_rect,2)
 # player
 class Player(pygame.sprite.Sprite):
     # sprite for player
@@ -25,10 +41,13 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.Surface((15,15))
         self.image.fill((0,255,0))
         self.rect = self.image.get_rect()
+        self.radius = 7
+        #pygame.draw.circle(self.image,red,self.rect.center,self.radius)
         self.rect.centerx = 50
         self.rect.bottom = height - 10
         self.speedx = 0
         self.speedy = 0
+        self.shield = 100
 
     def update(self):
         self.speedx = 0
@@ -82,15 +101,33 @@ class Enemy(pygame.sprite.Sprite):
 class Ghost(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load(os.path.join(img_folder,"Ghost2.png")).convert()
-        self.image.set_colorkey(black)
+        self.image_orig = pygame.image.load(os.path.join(img_folder,"Ghost2.png")).convert()
+        self.image_orig.set_colorkey(black)
+        self.image = self.image_orig.copy()
         self.rect = self.image.get_rect()
+        self.radius = int(self.rect.width* 0.8/2)
+        #pygame.draw.circle(self.image, red, self.rect.center, self.radius)
         self.rect.x = random.randrange(width - self.rect.width)
         self.rect.y = random.randrange(-100,-40)
         self.speedy = random.randrange(3,8)
         self.speedx = random.randrange(-3,3)
+        self.rot = 0
+        self.rot_speed = random.randrange(-8,8)
+        self.last_update = pygame.time.get_ticks()
 
+    def rotate(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > 50:
+            self.last_update = now
+            self.rot = (self.rot + self.rot_speed)%360
+
+            new_image = pygame.transform.rotate(self.image_orig,self.rot)
+            old_center = self.rect.center
+            self.image = new_image
+            self.rect = self.image.get_rect()
+            self.rect.center = old_center
     def update(self):
+        self.rotate()
         self.rect.x += self.speedx
         self.rect.y += self.speedy
         if self.rect.top > height + 10 or self.rect.left < -25 or self.rect.right > width + 20:
@@ -140,9 +177,7 @@ player = Player()
 all_sprites.add(player)
 
 for i in range(10):
-    m = Ghost()
-    Ghosts.add(m)
-    all_sprites.add(m)
+    newGhost()
 
 for j in range(3):
     k = Enemy()
@@ -168,23 +203,26 @@ while running:
     # check collision with ghost
     hits = pygame.sprite.groupcollide(Ghosts,bullets,True,True)
     for hit in hits:
-        m = Ghost()
-        all_sprites.add(m)
-        Ghosts.add(m)
+        newGhost()
     hits2 = pygame.sprite.groupcollide(Enemys,bullets,True,True)
-    for hit in hits2:
+    for hitt in hits2:
         l = Enemy()
         all_sprites.add(l)
         Enemys.add(l)
 
     #check collision
-    #hits1 = pygame.sprite.spritecollide(player,Ghosts,False)
-    #if hits1:
-        #running = False
+    hits1 = pygame.sprite.spritecollide(player,Ghosts,True,pygame.sprite.collide_circle)
+    for hit in hits1:
+        player.shield -= hit.radius*2
+        newGhost()
+        if player.shield <= 0:
+            running = False
 
     screen.fill(darkred)
     screen.blit(background,background_rect)
     all_sprites.draw(screen)
+    draw_shield_bar(screen,5,5,player.shield)
+
 
     pygame.display.flip()
 
