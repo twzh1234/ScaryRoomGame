@@ -53,6 +53,7 @@ def show_begin_screen():
     draw_text(screen, "You have three lives", 45, width / 2, 200)
     draw_text(screen, "Arrow keys move, Space to fire",22,width/2, width/2 + 80)
     draw_text(screen,"press any key to begin", 18, width/2,height*3/4)
+    
     pygame.display.flip()
     waiting = True
     while waiting:
