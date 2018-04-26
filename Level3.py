@@ -23,6 +23,47 @@ def newGhost():
     all_sprites.add(m)
     Ghosts.add(m)
 
+font_name = pygame.font.match_font('arial')
+def draw_text(surface, text, size, x, y):
+    font = pygame.font.Font(font_name,size)
+    text_surface = font.render(text,True,white)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x,y)
+    surface.blit(text_surface,text_rect)
+
+
+def show_go_screen():
+    draw_text(screen, "you die",64 , width/2, height /4)
+    draw_text(screen, "Esc to quit",22,width/2, width/2)
+    draw_text(screen,"press a key to restart", 18, width/2,height*3/4)
+    pygame.display.flip()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                if event.type == pygame.K_ESCAPE:
+                    pygame.quit()
+            if event.type == pygame.KEYUP:
+                waiting = False
+
+def show_begin_screen():
+    draw_text(screen, "ScaryRoom Game!",64 , width/2, height /4)
+    draw_text(screen, "You have three lives", 45, width / 2, 200)
+    draw_text(screen, "Arrow keys move, Space to fire",22,width/2, width/2 + 80)
+    draw_text(screen,"press any key to begin", 18, width/2,height*3/4)
+    pygame.display.flip()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.K_ESCAPE:
+                pygame.quit()
+            if event.type == pygame.KEYUP:
+                waiting = False
 def draw_shield_bar(surface,x,y,pect):
     if pect < 0:
         pect = 0
@@ -48,8 +89,17 @@ class Player(pygame.sprite.Sprite):
         self.speedx = 0
         self.speedy = 0
         self.shield = 100
+        self.shoot_delay = 250
+        self.last_shot = pygame.time.get_ticks()
+        self.lives = 3
+        self.hidden = False
+        self.hide_timer = pygame.time.get_ticks()
 
     def update(self):
+        # unhide if hidden
+        #if self.hidden and pygame.time.get_ticks() - self.hide_timer > 3000:
+            #self.hidden = False
+            #self.rect.bottom = height - 10
         self.speedx = 0
         self.speedy = 0
         keystate = pygame.key.get_pressed()
@@ -61,6 +111,8 @@ class Player(pygame.sprite.Sprite):
             self.speedy = -5
         if keystate[pygame.K_DOWN]:
             self.speedy = 5
+        if keystate[pygame.K_SPACE]:
+            self.shoot()
         self.rect.x += self.speedx
         self.rect.y += self.speedy
         if self.rect.right > width:
@@ -72,10 +124,18 @@ class Player(pygame.sprite.Sprite):
         if self.rect.top < 0:
             self.rect.top = 0
     def shoot(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_shot > self.shoot_delay:
+            self.last_shot = now
         bullet = Bullet(self.rect.centerx,self.rect.top)
         all_sprites.add(bullet)
         bullets.add(bullet)
 
+    def hide(self):
+        # hide the player temporarily
+        self.hidden = True
+        self.hide_timer = pygame.time.get_ticks()
+        self.rect.center = (50, 490)
 class Enemy(pygame.sprite.Sprite):
     # sprite for player
     def __init__(self):
@@ -83,7 +143,8 @@ class Enemy(pygame.sprite.Sprite):
         self.image = pygame.image.load(os.path.join(img_folder,"Ghost2.png")).convert()
         self.image.set_colorkey(black)
         self.rect = self.image.get_rect()
-        self.rect.center = (width / 2, height / 2)
+        self.radius = int(self.rect.width * 0.8 / 2)
+        self.rect.center = (-20, random.randrange(100,400))
         self.y_speed = random.randrange(1,6)
 
     def update(self):
@@ -169,25 +230,33 @@ background_rect = background.get_rect()
 Bullets = pygame.image.load(os.path.join(img_folder, "laserGreen.png")).convert()
 
 
-all_sprites = pygame.sprite.Group()
-bullets = pygame.sprite.Group()
-Enemys = pygame.sprite.Group()
-Ghosts = pygame.sprite.Group()
-player = Player()
-all_sprites.add(player)
 
-for i in range(10):
-    newGhost()
-
-for j in range(3):
-    k = Enemy()
-    Enemys.add(k)
-    all_sprites.add(k)
+game_not_start = True
+game_over =True
 # game loop
 
 running = True
 
 while running:
+    if game_not_start:
+        show_begin_screen()
+        game_not_start = False
+
+        all_sprites = pygame.sprite.Group()
+        bullets = pygame.sprite.Group()
+        Enemys = pygame.sprite.Group()
+        Ghosts = pygame.sprite.Group()
+        player = Player()
+        all_sprites.add(player)
+
+        for i in range(10):
+            newGhost()
+
+        for j in range(3):
+            k = Enemy()
+            Enemys.add(k)
+            all_sprites.add(k)
+
     clock.tick(FPS)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -216,7 +285,23 @@ while running:
         player.shield -= hit.radius*2
         newGhost()
         if player.shield <= 0:
-            running = False
+            player.hide()
+            player.lives -= 1
+            player.shield = 100
+
+    hits3 = pygame.sprite.spritecollide(player, Enemys, True, pygame.sprite.collide_circle)
+    for hit in hits3:
+        player.shield -= hit.radius * 2
+        newGhost()
+        if player.shield <= 0:
+            player.hide()
+            player.lives -= 1
+            player.shield = 100
+    if player.lives == 0:
+        game_over = True
+        show_go_screen()
+        game_not_start = True
+
 
     screen.fill(darkred)
     screen.blit(background,background_rect)
