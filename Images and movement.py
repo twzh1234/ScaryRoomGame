@@ -3,6 +3,8 @@ import random
 pygame.init()
 GREEN = (20, 255, 140)
 red  = (255,  0,  0)
+height = 800
+width = 800
 screen = pygame.display.set_mode((800, 800))
 zombie = pygame.image.load('Geoffrey_Challen.jpg')
 zombie = pygame.transform.scale(zombie, (50, 50))
@@ -10,7 +12,6 @@ zombie = pygame.transform.scale(zombie, (50, 50))
 
 class Player(pygame.sprite.Sprite):
     change_x = 0
-
     change_y = 0
 
     def __init__(self, x, y):
@@ -31,6 +32,14 @@ class Player(pygame.sprite.Sprite):
         self.rect.move_ip(0,self.change_y)
 
         self.rect.move_ip(self.change_x,0)
+        if self.rect.right > width:
+            self.rect.right = width
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.bottom > height:
+            self.rect.bottom = height
+        if self.rect.top < 0:
+            self.rect.top = 0
 
 
 all_things_list = pygame.sprite.RenderPlain()
