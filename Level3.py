@@ -33,17 +33,18 @@ def draw_text(surface, text, size, x, y):
 
 
 def show_go_screen():
-    draw_text(screen, "you die",64 , width/2, height /4)
+    draw_text(screen, "you dead",64 , width/2, height /4)
     draw_text(screen, "Esc to quit",22,width/2, width/2)
     draw_text(screen,"press a key to restart", 18, width/2,height*3/4)
     pygame.display.flip()
     waiting = True
+    clock.tick(1)
     while waiting:
         clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                if event.type == pygame.K_ESCAPE:
+            if event.type == pygame.K_ESCAPE:
                     pygame.quit()
             if event.type == pygame.KEYUP:
                 waiting = False
@@ -53,7 +54,36 @@ def show_begin_screen():
     draw_text(screen, "You have three lives", 45, width / 2, 200)
     draw_text(screen, "Arrow keys move, Space to fire",22,width/2, width/2 + 80)
     draw_text(screen,"press any key to begin", 18, width/2,height*3/4)
-    
+    pygame.display.flip()
+    waiting = True
+    clock.tick(1)
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.K_ESCAPE:
+                pygame.quit()
+            if event.type == pygame.KEYUP:
+                waiting = False
+
+def show_youwin_screen():
+    draw_text(screen, "Congratulations !", 64, width / 2, height / 4)
+    draw_text(screen, "You win the game", 45, width / 2, 200)
+    #draw_text(screen, "Arrow keys move, Space to fire", 22, width / 2, width / 2 + 80)
+    draw_text(screen, "press any key to restart", 18, width / 2, height * 3 / 4)
+    pygame.display.flip()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.K_ESCAPE:
+                pygame.quit()
+            if event.type == pygame.KEYUP:
+                waiting = False
+
     pygame.display.flip()
     waiting = True
     while waiting:
@@ -230,7 +260,9 @@ background = pygame.transform.scale(background,(500,500))
 background_rect = background.get_rect()
 Bullets = pygame.image.load(os.path.join(img_folder, "laserGreen.png")).convert()
 
-
+score = 0
+round(score,2)
+message = "        your goal is 10000 points !"
 
 game_not_start = True
 game_over =True
@@ -240,7 +272,11 @@ running = True
 
 while running:
     if game_not_start:
+        clock.tick(1)
         show_begin_screen()
+        clock.tick(1)
+
+        score = 0
         game_not_start = False
 
         all_sprites = pygame.sprite.Group()
@@ -273,9 +309,11 @@ while running:
     # check collision with ghost
     hits = pygame.sprite.groupcollide(Ghosts,bullets,True,True)
     for hit in hits:
+        score += 5 + hit.rect.y*0.5
         newGhost()
     hits2 = pygame.sprite.groupcollide(Enemys,bullets,True,True)
     for hitt in hits2:
+        score += 5 + hitt.rect.y*0.1
         l = Enemy()
         all_sprites.add(l)
         Enemys.add(l)
@@ -300,13 +338,22 @@ while running:
             player.shield = 100
     if player.lives == 0:
         game_over = True
+        clock.tick(1)
         show_go_screen()
+        clock.tick(1)
+        game_not_start = True
+
+    if score >= 10000:
+        clock.tick(1)
+        show_youwin_screen()
+        clock.tick(1)
         game_not_start = True
 
 
     screen.fill(darkred)
     screen.blit(background,background_rect)
     all_sprites.draw(screen)
+    draw_text(screen, "score:     " +  str(round(score,2)) + message, 18, width/2, 10)
     draw_shield_bar(screen,5,5,player.shield)
 
 

@@ -337,6 +337,6 @@ while gameActivate:
         pygame.draw.rect(screen, (150, 150, 250), rct)
 
         if (rct.colliderect(endingpoints)):
-            number = 1
+            number = 2
         clock.tick(50)
         pygame.display.update()
