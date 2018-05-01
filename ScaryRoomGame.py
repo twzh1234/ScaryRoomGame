@@ -1,5 +1,8 @@
 # import sys.pygame
 import pygame
+import random
+import os
+
 
 # dead_sound = pygame.mixer.Sound("dead.mp3")
 
@@ -27,28 +30,6 @@ def stop(rct, obstacles):
             rct.move_ip(0, 3)
         if (rct.centery < obstacles.y and obstacles.x < rct.centerx + 5):
             rct.move_ip(0, -3)
-def update(rct):
-    speedx = 0
-    speedy = 0
-    keystate = pygame.key.get_pressed()
-    if keystate[pygame.K_RIGHT]:
-        speedx = 3
-    if keystate[pygame.K_LEFT]:
-        speedx = -3
-    if keystate[pygame.K_UP]:
-        speedy = -3
-    if keystate[pygame.K_DOWN]:
-        speedy = 3
-    rct.x += speedx
-    rct.y += speedy
-    if rct.right > 500:
-        rct.right = width
-    if rct.left < 0:
-        rct.left = 0
-    if rct.bottom > 500:
-        rct.bottom = 500
-    if rct.top < 0:
-        rct.top = 0
 
 
 def bouncing(rct, a, b, c, d, e, f, x, y):
@@ -67,17 +48,330 @@ def bouncing(rct, a, b, c, d, e, f, x, y):
     return x, y
 
 
+font_name = pygame.font.match_font('arial')
+print("abd")
+
+
+def draw_text(surface, text, size, x, y):
+    print(surface)
+    print(text)
+    print(size)
+    print(x, y)
+    print(font_name)
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, white)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surface.blit(text_surface, text_rect)
+
+
 size = width, height = 500, 500
 screen = pygame.display.set_mode(size)
 screen.fill((100, 0, 0))
 ima = 4 * [4 * [0]]
 gameActivate = True
-number = 1
+number = 0
 clock = pygame.time.Clock()
+left1 = pygame.image.load("left1.png")
+realleft1 = pygame.transform.scale(left1, (10, 20)).convert_alpha()
+left2 = pygame.image.load("left2.png")
+realleft2 = pygame.transform.scale(left2, (10, 20)).convert_alpha()
+left3 = pygame.image.load("left3.png")
+realleft3 = pygame.transform.scale(left3, (10, 20)).convert_alpha()
+right1 = pygame.image.load("right1.png")
+realright1 = pygame.transform.scale(right1, (10, 20)).convert_alpha()
+right2 = pygame.image.load("right2.png")
+realright2 = pygame.transform.scale(right2, (10, 20)).convert_alpha()
+right3 = pygame.image.load("right3.png")
+realright3 = pygame.transform.scale(right3, (10, 20)).convert_alpha()
+back = pygame.image.load("back.png")
+realback = pygame.transform.scale(back, (10, 20)).convert_alpha()
+front = pygame.image.load("front.png")
+realfront = pygame.transform.scale(front, (10, 20)).convert_alpha()
+a = 1
+
+game_not_start = True
+game_over = True
+FPS = 60
+# set up assets folders
+game_folder = os.path.dirname(__file__)
+img_folder = os.path.join(game_folder, "image")
+# color
+white = (255, 255, 255)
+black = (0, 0, 0)
+darkred = (100, 0, 0)
+red = (255, 0, 0)
+
+
+def newGhost():
+    m = Ghost()
+    all_sprites.add(m)
+    Ghosts.add(m)
+
+
+font_name = pygame.font.match_font('arial')
+
+
+def draw_text(surface, text, size, x, y):
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, white)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surface.blit(text_surface, text_rect)
+
+
+def show_go_screen():
+    draw_text(screen, "you die", 64, width / 2, height / 4)
+    # draw_text(screen, "Esc to quit", 22, width / 2, width / 2)
+    draw_text(screen, "press a key to restart", 18, width / 2, height * 3 / 4)
+    pygame.display.flip()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.K_ESCAPE:
+                pygame.quit()
+            if event.type == pygame.KEYUP:
+                waiting = False
+
+
+def show_begin_screen():
+    draw_text(screen, "ScaryRoom Game!", 64, width / 2, height / 4)
+    draw_text(screen, "You have three lives", 45, width / 2, 200)
+    draw_text(screen, "Arrow keys move, Space to fire", 22, width / 2, width / 2 + 80)
+    draw_text(screen, "press any key to begin", 18, width / 2, height * 3 / 4)
+
+    pygame.display.flip()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.K_ESCAPE:
+                pygame.quit()
+            if event.type == pygame.KEYUP:
+                waiting = False
+
+
+def draw_shield_bar(surface, x, y, pect):
+    if pect < 0:
+        pect = 0
+    BAR_Length = 100
+    BAR_Height = 10
+    fill = (pect / 100) * BAR_Length
+    outline_rect = pygame.Rect(x, y, BAR_Length, BAR_Height)
+    fill_rect = pygame.Rect(x, y, fill, BAR_Height)
+    pygame.draw.rect(surface, red, fill_rect)
+    pygame.draw.rect(surface, white, outline_rect, 2)
+
+
+class Player(pygame.sprite.Sprite):
+    # sprite for player
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        # self.image = pygame.Surface((15,15))
+        # self.image.fill((0,255,0))
+        play = pygame.image.load(os.path.join(img_folder, "car.png")).convert()
+        self.image = pygame.transform.scale(play, (20, 40))
+
+        self.rect = self.image.get_rect()
+        self.image.set_colorkey(white)
+        self.radius = 2
+        # pygame.draw.circle(self.image,red,self.rect.center,self.radius)
+        self.rect.centerx = 50
+        self.rect.bottom = height - 10
+        self.speedx = 0
+        self.speedy = 0
+        self.shield = 100
+        self.shoot_delay = 250
+        self.last_shot = pygame.time.get_ticks()
+        self.lives = 3
+        self.hidden = False
+        self.hide_timer = pygame.time.get_ticks()
+
+    def update(self):
+        # unhide if hidden
+        # if self.hidden and pygame.time.get_ticks() - self.hide_timer > 3000:
+        # self.hidden = False
+        # self.rect.bottom = height - 10
+        self.speedx = 0
+        self.speedy = 0
+        keystate = pygame.key.get_pressed()
+        if keystate[pygame.K_LEFT]:
+            self.speedx = -5
+        if keystate[pygame.K_RIGHT]:
+            self.speedx = 5
+        if keystate[pygame.K_UP]:
+            self.speedy = -5
+        if keystate[pygame.K_DOWN]:
+            self.speedy = 5
+        if keystate[pygame.K_SPACE]:
+            self.shoot()
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy
+        if self.rect.right > width:
+            self.rect.right = width
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.bottom > height:
+            self.rect.bottom = height
+        if self.rect.top < 0:
+            self.rect.top = 0
+
+    def shoot(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_shot > self.shoot_delay:
+            self.last_shot = now
+        bullet = Bullet(self.rect.centerx, self.rect.top)
+        all_sprites.add(bullet)
+        bullets.add(bullet)
+
+    def hide(self):
+        # hide the player temporarily
+        self.hidden = True
+        self.hide_timer = pygame.time.get_ticks()
+        self.rect.center = (50, 490)
+
+
+class Enemy(pygame.sprite.Sprite):
+    # sprite for player
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(os.path.join(img_folder, "Ghost2.png")).convert()
+        self.image.set_colorkey(black)
+        self.rect = self.image.get_rect()
+        self.radius = int(self.rect.width * 0.8 / 2)
+        self.rect.center = (-20, random.randrange(100, 400))
+        self.y_speed = random.randrange(1, 6)
+
+    def update(self):
+        self.rect.x += random.randrange(2, 6)
+        self.rect.y += self.y_speed
+        if self.rect.bottom > height - 200:
+            self.y_speed = -self.y_speed
+        if self.rect.top < 200:
+            self.y_speed = -self.y_speed
+        if self.rect.left > width:
+            self.rect.right = 0
+
+
+class Ghost(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image_orig = pygame.image.load(os.path.join(img_folder, "Ghost2.png")).convert()
+        self.image_orig.set_colorkey(black)
+        self.image = self.image_orig.copy()
+        self.rect = self.image.get_rect()
+        self.radius = int(self.rect.width * 0.8 / 2)
+        # pygame.draw.circle(self.image, red, self.rect.center, self.radius)
+        self.rect.x = random.randrange(width - self.rect.width)
+        self.rect.y = random.randrange(-100, -40)
+        self.speedy = random.randrange(3, 8)
+        self.speedx = random.randrange(-3, 3)
+        self.rot = 0
+        self.rot_speed = random.randrange(-8, 8)
+        self.last_update = pygame.time.get_ticks()
+
+    def rotate(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > 50:
+            self.last_update = now
+            self.rot = (self.rot + self.rot_speed) % 360
+
+            new_image = pygame.transform.rotate(self.image_orig, self.rot)
+            old_center = self.rect.center
+            self.image = new_image
+            self.rect = self.image.get_rect()
+            self.rect.center = old_center
+
+    def update(self):
+        self.rotate()
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy
+        if self.rect.top > height + 10 or self.rect.left < -25 or self.rect.right > width + 20:
+            self.rect.x = random.randrange(width - self.rect.width)
+            self.rect.y = random.randrange(-100, -40)
+            self.speedy = random.randrange(1, 8)
+
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        # self.image = pygame.Surface((10,10))
+        # self.image.fill((255,255,0))
+        self.image = Bullets
+        self.image.set_colorkey(black)
+        self.rect = self.image.get_rect()
+        self.rect.bottom = y
+        self.rect.centerx = x
+        self.speedy = -10
+
+    def update(self):
+        self.rect.y += self.speedy
+        if self.rect.bottom < 0:
+            self.kill()
+
+
+def show_youwin_screen():
+    draw_text(screen, "Congratulations !", 64, width / 2, height / 4)
+    draw_text(screen, "You win the game", 45, width / 2, 200)
+    # draw_text(screen, "Arrow keys move, Space to fire", 22, width / 2, width / 2 + 80)
+    draw_text(screen, "press any key to restart", 18, width / 2, height * 3 / 4)
+    pygame.display.flip()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.K_ESCAPE:
+                pygame.quit()
+            if event.type == pygame.KEYUP:
+                waiting = False
+
+    pygame.display.flip()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.K_ESCAPE:
+                pygame.quit()
+            if event.type == pygame.KEYUP:
+                waiting = False
+
+
 ##########################################
 while gameActivate:
+
+    title = pygame.image.load("scarygame.png")
+    title = pygame.transform.scale(title, (450, 350))
+    carry = title.get_rect(center=(250, 250))
+    presskey = pygame.image.load("presskey.png")
+    presskey = pygame.transform.scale(presskey, (450, 100))
+    carry1 = presskey.get_rect(center=(250, 400))
+
+    while number == 0:
+        screen.fill((255, 255, 255))
+        screen.blit(title, carry)
+        screen.blit(presskey, carry1)
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.K_ESCAPE:
+                gameActivate = False
+                number = 3
+                break
+            if event.type == pygame.KEYUP:
+                number = 1
+
     # **player**#
-    rct = pygame.Rect((50, 350), (10, 10))
+    rct = pygame.Rect((50, 350), (10, 20))
     ###wall###
     wall1 = pygame.Rect((0, 350), (400, 6))
     wall2 = pygame.Rect((80, 350), (6, 80))
@@ -97,7 +391,7 @@ while gameActivate:
     color = (100, 0, 0)
     close = False
     door1 = pygame.Rect((400, 350), (100, 6))
-    trigger2 = pygame.Rect((400, 320), (100, 30))
+    trigger2 = pygame.Rect((400, 310), (100, 30))
     color1 = (100, 0, 0)
     close1 = False
     door2 = pygame.Rect((250, 300), (6, 50))
@@ -109,38 +403,38 @@ while gameActivate:
     blad = pygame.image.load("blade.png")
     #####trapRoom1 corridor
     trigger1 = pygame.Rect((400, 350), (6, 150))
-    realblade = pygame.transform.scale(blade, (50, 90)).convert_alpha()
-    blade11 = pygame.Rect((500, 350), (10, 90))
+    realblade = pygame.transform.scale(blade, (50, 120)).convert_alpha()
+    blade11 = pygame.Rect((500, 350), (10, 120))
     # blade11.x = 500
     # blade11.y = 350
     speed = 0
     ########
-    realblade1 = pygame.transform.scale(blade, (50, 40)).convert_alpha()
-    blade1 = pygame.Rect((500, 350), (10, 40))
-    realblade12 = pygame.transform.scale(blad, (50, 40)).convert_alpha()
-    blade12 = pygame.Rect((500, 450), (10, 40))
+    realblade1 = pygame.transform.scale(blade, (50, 50)).convert_alpha()
+    blade1 = pygame.Rect((500, 350), (10, 50))
+    realblade12 = pygame.transform.scale(blad, (50, 80)).convert_alpha()
+    blade12 = pygame.Rect((500, 450), (10, 80))
     speed1 = 0
     #######
-    realblade2 = pygame.transform.scale(blad, (50, 90)).convert_alpha()
-    blade2 = pygame.Rect((500, 380), (10, 90))
+    realblade2 = pygame.transform.scale(blad, (50, 120)).convert_alpha()
+    blade2 = pygame.Rect((500, 380), (10, 130))
     speed2 = 0
     #############
-    realblade3 = pygame.transform.scale(blade, (50, 30))
-    blade3 = pygame.Rect((500, 370), (10, 30))
-    realblade32 = pygame.transform.scale(blad, (50, 30))
-    blade32 = pygame.Rect((500, 440), (10, 30))
+    realblade3 = pygame.transform.scale(blade, (50, 20))
+    blade3 = pygame.Rect((500, 370), (10, 20))
+    realblade32 = pygame.transform.scale(blad, (50, 70))
+    blade32 = pygame.Rect((500, 440), (10, 70))
     blade32.x = 500
     blade32.y = 440
     speed3 = 0
     #####trapRoom1 closing room
     ghost = pygame.image.load("ghost.gif")
     realghost = pygame.transform.scale(ghost, (40, 40)).convert_alpha()
-    ghost1 = realghost.get_rect(center=(280, 11))
-    ghost2 = realghost.get_rect(center=(280, 11))
-    ghost3 = realghost.get_rect(center=(280, 11))
-    ghost4 = realghost.get_rect(center=(280, 11))
-    ghost5 = realghost.get_rect(center=(280, 11))
-    ghost6 = realghost.get_rect(center=(280, 11))
+    ghost1 = pygame.Rect((265, -4), (20, 30))
+    ghost2 = pygame.Rect((265, -4), (20, 30))
+    ghost3 = pygame.Rect((265, -4), (20, 30))
+    ghost4 = pygame.Rect((265, -4), (20, 30))
+    ghost5 = pygame.Rect((265, -4), (20, 30))
+    ghost6 = pygame.Rect((265, -4), (20, 30))
     x1, y1 = 3, 3
     x2, y2 = -2, 7
     x3, y3 = -4, 3
@@ -151,21 +445,63 @@ while gameActivate:
     floor = pygame.image.load("floor.jpg").convert_alpha()
     floor1 = floor.get_rect(center=(250, 250))
     ###ending points###
-    endingpoints = pygame.Rect((0, 0), (20, 20))
+    endingpoints = pygame.Rect((50, 50), (40, 80))
+    car = pygame.image.load("car.png")
+    realcar = pygame.transform.scale(car,(40,80)).convert_alpha()
 
     #####dead notice####
     dead = pygame.image.load("dead.png")
     dead1 = realblade3.get_rect(center=(250, 250))
+    ###############
+    speedx = 0
     while number == 1:
-        dx = 0
-        dy = 0
+        temp = 0
+        speedy = 0
         keystate = pygame.key.get_pressed()
+        if keystate[pygame.K_RIGHT]:
+            a += 1
+            if (a >= 3):
+                a = 0
+            temp = 3
+        elif keystate[pygame.K_LEFT]:
+            a += 1
+            if (a >= 6):
+                a = 3
+            temp = -3
+        if temp == 0:
+            if (speedx > 0):
+                a = 1
+            elif (speedx < 0):
+                a = 4
+        speedx = temp
+        if keystate[pygame.K_UP]:
+            speedy = -3
+            a = 6
+        if keystate[pygame.K_DOWN]:
+            speedy = 3
+            a = 7
+        rct.x += speedx
+        rct.y += speedy
+        if rct.right > 500:
+            rct.right = width
+        if rct.left < 0:
+            rct.left = 0
+        if rct.bottom > 500:
+            rct.bottom = 500
+        if rct.top < 0:
+            rct.top = 0
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                number = 3
                 gameActivate = False
-                number = 0
+                break
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    number = 3
+                    gameActivate = False
+                    break
 
-        update(rct)
+        # update(rct)
         blade11.move_ip(speed, 0)
         blade1.move_ip(speed1, 0)
         blade12.move_ip(speed1, 0)
@@ -231,48 +567,56 @@ while gameActivate:
         if (blade11.colliderect(rct)):
             screen.fill((0, 0, 0))
             screen.blit(dead, dead1)
+            clock.tick(1)
             pygame.display.update()
             clock.tick(1)
             break;
         if (blade1.colliderect(rct)):
             screen.fill((0, 0, 0))
             screen.blit(dead, dead1)
+            clock.tick(1)
             pygame.display.update()
             clock.tick(1)
             break;
         if (blade12.colliderect(rct)):
             screen.fill((0, 0, 0))
             screen.blit(dead, dead1)
+            clock.tick(1)
             pygame.display.update()
             clock.tick(1)
             break;
         if (blade2.colliderect(rct)):
             screen.fill((0, 0, 0))
             screen.blit(dead, dead1)
+            clock.tick(1)
             pygame.display.update()
             clock.tick(1)
             break;
         if (blade3.colliderect(rct)):
             screen.fill((0, 0, 0))
             screen.blit(dead, dead1)
+            clock.tick(1)
             pygame.display.update()
             clock.tick(1)
             break;
         if (blade32.colliderect(rct)):
             screen.fill((0, 0, 0))
             screen.blit(dead, dead1)
+            clock.tick(1)
             pygame.display.update()
             clock.tick(1)
             break;
         if (ghost1.colliderect(rct)):
             screen.fill((0, 0, 0))
             screen.blit(dead, dead1)
+            clock.tick(1)
             pygame.display.update()
             clock.tick(1)
             break;
         if (ghost2.colliderect(rct)):
             screen.fill((0, 0, 0))
             screen.blit(dead, dead1)
+            clock.tick(1)
             pygame.display.update()
             clock.tick(1)
             break;
@@ -320,23 +664,138 @@ while gameActivate:
         pygame.draw.rect(screen, color, door)
         pygame.draw.rect(screen, color1, door1)
         pygame.draw.rect(screen, color2, door2)
-        pygame.draw.rect(screen, (100, 50, 200), endingpoints)
-        screen.blit(realblade, (blade11.x - 20,blade11.y))
+        screen.blit(realcar,endingpoints)
+        screen.blit(realblade, (blade11.x - 20, blade11.y))
         screen.blit(realblade1, (blade1.x - 20, blade1.y))
-        screen.blit(realblade12, (blade12.x - 20,blade12.y))
-        screen.blit(realblade2, (blade2.x -20,blade2.y))
-        screen.blit(realblade3, (blade3.x -20,blade3.y))
-        screen.blit(realblade32, (blade32.x -20,blade32.y))
-        screen.blit(realghost, ghost1)
-        screen.blit(realghost, ghost2)
-        screen.blit(realghost, ghost3)
-        screen.blit(realghost, ghost4)
-        screen.blit(realghost, ghost5)
-        screen.blit(realghost, ghost6)
-
-        pygame.draw.rect(screen, (150, 150, 250), rct)
-
+        screen.blit(realblade12, (blade12.x - 20, blade12.y))
+        screen.blit(realblade2, (blade2.x - 20, blade2.y))
+        screen.blit(realblade3, (blade3.x - 20, blade3.y))
+        screen.blit(realblade32, (blade32.x - 20, blade32.y))
+        screen.blit(realghost, (ghost1.x - 10, ghost1.y))
+        screen.blit(realghost, (ghost2.x - 10, ghost2.y))
+        screen.blit(realghost, (ghost3.x - 10, ghost3.y))
+        screen.blit(realghost, (ghost4.x - 10, ghost4.y))
+        screen.blit(realghost, (ghost5.x - 10, ghost5.y))
+        screen.blit(realghost, (ghost6.x - 10, ghost6.y))
+        if (a == 0):
+            screen.blit(realright1, (rct.x + 5, rct.y))
+        if (a == 1):
+            screen.blit(realright2, (rct.x + 5, rct.y))
+        if (a == 2):
+            screen.blit(realright3, (rct.x + 5, rct.y))
+        if (a == 3):
+            screen.blit(realleft1, (rct.x + 5, rct.y))
+        if (a == 4):
+            screen.blit(realleft2, (rct.x + 5, rct.y))
+        if (a == 5):
+            screen.blit(realleft3, (rct.x + 5, rct.y))
+        if (a == 6):
+            screen.blit(realback, (rct.x + 5, rct.y))
+        if (a == 7):
+            screen.blit(realfront, (rct.x + 5, rct.y))
         if (rct.colliderect(endingpoints)):
             number = 2
         clock.tick(50)
         pygame.display.update()
+
+    # initialize window
+    pygame.init()
+    pygame.mixer.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("level 2")
+    clock = pygame.time.Clock()
+
+    background = pygame.image.load(os.path.join(img_folder, "back2.png")).convert()
+    background = pygame.transform.scale(background, (500, 500))
+    background_rect = background.get_rect()
+    Bullets = pygame.image.load(os.path.join(img_folder, "laserGreen.png")).convert()
+    clock.tick(1)
+
+    score = 0
+    round(score, 2)
+    message = "        your goal is 10000 points !"
+    while number == 2:
+        if game_not_start:
+            game_not_start = False
+
+            all_sprites = pygame.sprite.Group()
+            bullets = pygame.sprite.Group()
+            Enemys = pygame.sprite.Group()
+            Ghosts = pygame.sprite.Group()
+            player = Player()
+            all_sprites.add(player)
+
+            for i in range(10):
+                newGhost()
+
+            for j in range(3):
+                k = Enemy()
+                Enemys.add(k)
+                all_sprites.add(k)
+
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                number = 3
+                gameActivate = False
+                break
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    player.shoot()
+                if event.key == pygame.K_ESCAPE:
+                    number = 3
+                    gameActivate = False
+                    break
+
+        all_sprites.update()
+
+        # check collision with ghost
+        hits = pygame.sprite.groupcollide(Ghosts, bullets, True, True)
+        for hit in hits:
+            score += 5 + hit.rect.y * 0.5
+            newGhost()
+        hits2 = pygame.sprite.groupcollide(Enemys, bullets, True, True)
+        for hitt in hits2:
+            score += 5 + hitt.rect.y * 0.1
+            l = Enemy()
+            all_sprites.add(l)
+            Enemys.add(l)
+
+        # check collision
+        hits1 = pygame.sprite.spritecollide(player, Ghosts, True, pygame.sprite.collide_circle)
+        for hit in hits1:
+            player.shield -= hit.radius * 2
+            newGhost()
+            if player.shield <= 0:
+                player.hide()
+                player.lives -= 1
+                player.shield = 100
+
+        hits3 = pygame.sprite.spritecollide(player, Enemys, True, pygame.sprite.collide_circle)
+        for hit in hits3:
+            player.shield -= hit.radius * 2
+            newGhost()
+            if player.shield <= 0:
+                player.hide()
+                player.lives -= 1
+                player.shield = 100
+        if player.lives == 0:
+            game_over = True
+            clock.tick(1)
+            show_go_screen()
+            clock.tick(1)
+            game_not_start = True
+
+        if score >= 10000:
+            clock.tick(1)
+            show_youwin_screen()
+            number = 0
+            clock.tick(1)
+            game_not_start = True
+
+        screen.fill(darkred)
+        screen.blit(background, background_rect)
+        all_sprites.draw(screen)
+        draw_shield_bar(screen, 5, 5, player.shield)
+        draw_text(screen, "score:     " + str(round(score, 2)) + message, 18, width / 2, 10)
+        pygame.display.flip()
