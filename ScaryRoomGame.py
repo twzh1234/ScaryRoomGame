@@ -49,15 +49,10 @@ def bouncing(rct, a, b, c, d, e, f, x, y):
 
 
 font_name = pygame.font.match_font('arial')
-print("abd")
 
 
 def draw_text(surface, text, size, x, y):
-    print(surface)
-    print(text)
-    print(size)
-    print(x, y)
-    print(font_name)
+    font_name = pygame.font.match_font('arial')
     font = pygame.font.Font(font_name, size)
     text_surface = font.render(text, True, white)
     text_rect = text_surface.get_rect()
@@ -87,7 +82,7 @@ realright3 = pygame.transform.scale(right3, (10, 20)).convert_alpha()
 back = pygame.image.load("back.png")
 realback = pygame.transform.scale(back, (10, 20)).convert_alpha()
 front = pygame.image.load("front.png")
-realfront = pygame.transform.scale(front, (10, 20)).convert_alpha()
+realfront = pygame.transform.scale(front, (15, 20)).convert_alpha()
 a = 1
 
 game_not_start = True
@@ -107,17 +102,6 @@ def newGhost():
     m = Ghost()
     all_sprites.add(m)
     Ghosts.add(m)
-
-
-font_name = pygame.font.match_font('arial')
-
-
-def draw_text(surface, text, size, x, y):
-    font = pygame.font.Font(font_name, size)
-    text_surface = font.render(text, True, white)
-    text_rect = text_surface.get_rect()
-    text_rect.midtop = (x, y)
-    surface.blit(text_surface, text_rect)
 
 
 def show_go_screen():
@@ -186,7 +170,7 @@ class Player(pygame.sprite.Sprite):
         self.speedx = 0
         self.speedy = 0
         self.shield = 100
-        self.shoot_delay = 250
+        self.shoot_delay = 500
         self.last_shot = pygame.time.get_ticks()
         self.lives = 3
         self.hidden = False
@@ -244,7 +228,7 @@ class Enemy(pygame.sprite.Sprite):
         self.image.set_colorkey(black)
         self.rect = self.image.get_rect()
         self.radius = int(self.rect.width * 0.8 / 2)
-        self.rect.center = (-20, random.randrange(100, 400))
+        self.rect.center = (-20, random.randrange(20, 470))
         self.y_speed = random.randrange(1, 6)
 
     def update(self):
@@ -269,8 +253,8 @@ class Ghost(pygame.sprite.Sprite):
         # pygame.draw.circle(self.image, red, self.rect.center, self.radius)
         self.rect.x = random.randrange(width - self.rect.width)
         self.rect.y = random.randrange(-100, -40)
-        self.speedy = random.randrange(3, 8)
-        self.speedx = random.randrange(-3, 3)
+        self.speedy = random.randrange(7, 10)
+        self.speedx = random.randrange(-5, 5)
         self.rot = 0
         self.rot_speed = random.randrange(-8, 8)
         self.last_update = pygame.time.get_ticks()
@@ -317,7 +301,7 @@ class Bullet(pygame.sprite.Sprite):
 
 def show_youwin_screen():
     draw_text(screen, "Congratulations !", 64, width / 2, height / 4)
-    draw_text(screen, "You win the game", 45, width / 2, 200)
+    draw_text(screen, "You survive", 45, width / 2, 200)
     # draw_text(screen, "Arrow keys move, Space to fire", 22, width / 2, width / 2 + 80)
     draw_text(screen, "press any key to restart", 18, width / 2, height * 3 / 4)
     pygame.display.flip()
@@ -354,21 +338,51 @@ while gameActivate:
     presskey = pygame.image.load("presskey.png")
     presskey = pygame.transform.scale(presskey, (450, 100))
     carry1 = presskey.get_rect(center=(250, 400))
-
+    background = pygame.image.load("background.jpg")
+    carry2 = background.get_rect(center=(250, 250))
+    a = 0;
     while number == 0:
-        screen.fill((255, 255, 255))
+        screen.blit(background, carry2)
         screen.blit(title, carry)
-        screen.blit(presskey, carry1)
+        if (a % 2 == 0):
+            screen.blit(presskey, carry1)
+        a += 1
         pygame.display.update()
+        clock.tick(1)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
             if event.type == pygame.K_ESCAPE:
                 gameActivate = False
-                number = 3
+                number = 5
                 break
             if event.type == pygame.KEYUP:
                 number = 1
+
+    car = pygame.image.load("car.png")
+    realcar = pygame.transform.scale(car, (40, 80)).convert_alpha()
+    carrier = realcar.get_rect(center=(250, 250))
+    floor = pygame.image.load("floor.jpg").convert_alpha()
+    background = pygame.transform.scale(floor, (500, 500))
+    background_rect = background.get_rect()
+    rct = pygame.Rect((250, 50), (10, 20))
+    screen.blit(realleft2, rct)
+    while number == 1:
+        carrier.move_ip(0, -1)
+        screen.blit(floor, background_rect)
+        screen.blit(realcar, carrier)
+        screen.blit(realleft2, rct)
+        clock.tick(50)
+        pygame.display.update()
+        if (carrier.colliderect(rct)):
+            number = 2
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                number = 5
+                gameActivate = False
+                break
+
+    # clock.tick(1)
 
     # **player**#
     rct = pygame.Rect((50, 350), (10, 20))
@@ -447,14 +461,63 @@ while gameActivate:
     ###ending points###
     endingpoints = pygame.Rect((50, 50), (40, 80))
     car = pygame.image.load("car.png")
-    realcar = pygame.transform.scale(car,(40,80)).convert_alpha()
+    realcar = pygame.transform.scale(car, (40, 80)).convert_alpha()
 
     #####dead notice####
     dead = pygame.image.load("dead.png")
     dead1 = realblade3.get_rect(center=(250, 250))
     ###############
     speedx = 0
-    while number == 1:
+    #########text#######
+    pygame.font.init()  # you have to call this at the start,
+    # if you want to use this module.
+    myfont = pygame.font.SysFont('Comic Sans MS', 15)
+    myfon = pygame.font.SysFont('Comic Sans MS', 30)
+    subtitle = True
+    subtitle1 = True
+    count = 0
+
+    waiting = True
+    while number == 2:
+        while (subtitle):
+            screen.fill((0, 0, 0))
+            for event in pygame.event.get():
+
+                if event.type == pygame.QUIT:
+                    number = 5
+                    gameActivate = False
+                    subtitle = False
+                    subtitle1 = False
+                    break
+                elif event.type == pygame.KEYDOWN:
+                    if count >= 2:
+                        subtitle = False
+                        break
+                    if event.key == pygame.K_2:
+                        count += 1
+            screen.blit(background, background_rect)
+            pygame.draw.rect(screen, (0, 0, 0), wall1)
+            pygame.draw.rect(screen, (0, 0, 0), wall2)
+            pygame.draw.rect(screen, (0, 0, 0), wall3)
+            pygame.draw.rect(screen, (0, 0, 0), boderlef)
+            pygame.draw.rect(screen, (0, 0, 0), boderrig)
+            pygame.draw.rect(screen, (0, 0, 0), boderdown)
+            pygame.draw.rect(screen, (0, 0, 0), boderup)
+            if (count == 0):
+                textsurface = myfont.render('oh,the stupid car hits me,what is this place(press 2 to continue)', True,
+                                            (0, 0, 0))
+                screen.blit(textsurface, (40, 450))
+            if (count == 1):
+                textsurface = myfont.render('my leg is bleeding, my gosh(prees 2 to continue)', True, (0, 0, 0))
+                screen.blit(textsurface, (40, 450))
+            if (count == 2):
+                textsurface = myfont.render('oh it is raining, the house is a good place to stay(press 2)', True,
+                                            (0, 0, 0))
+                screen.blit(textsurface, (40, 450))
+            pygame.display.update()
+        if (subtitle1 is False):
+            continue
+
         temp = 0
         speedy = 0
         keystate = pygame.key.get_pressed()
@@ -492,12 +555,12 @@ while gameActivate:
             rct.top = 0
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                number = 3
+                number = 5
                 gameActivate = False
                 break
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    number = 3
+                    number = 5
                     gameActivate = False
                     break
 
@@ -566,90 +629,224 @@ while gameActivate:
 
         if (blade11.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
         if (blade1.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
         if (blade12.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
         if (blade2.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
         if (blade3.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
         if (blade32.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
         if (ghost1.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
         if (ghost2.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
         if (ghost3.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
         if (ghost4.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
         if (ghost5.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
         if (ghost6.colliderect(rct)):
             screen.fill((0, 0, 0))
-            screen.blit(dead, dead1)
+            textsurface = myfon.render("you die", True, (250, 250, 250))
+            screen.blit(textsurface, (80, 150))
+            textsurface1 = myfon.render("press any keys to restart", True, (250, 250, 250))
+            screen.blit(textsurface1, (30, 200))
             clock.tick(1)
             pygame.display.update()
             clock.tick(1)
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        number = 5
+                        gameActivate = False
+                        pygame.quit()
+                    if event.type == pygame.KEYUP:
+                        waiting = False
             break;
+        if (gameActivate is False):
+            continue
         if (rct.colliderect(endingpoints)):
-            number = 1
+            number = 3
         pygame.draw.rect(screen, (150, 150, 150), trigger)
         pygame.draw.rect(screen, (100, 0, 0), trigger2)
         pygame.draw.rect(screen, (100, 100, 100), trigger3)
@@ -664,7 +861,7 @@ while gameActivate:
         pygame.draw.rect(screen, color, door)
         pygame.draw.rect(screen, color1, door1)
         pygame.draw.rect(screen, color2, door2)
-        screen.blit(realcar,endingpoints)
+        screen.blit(realcar, endingpoints)
         screen.blit(realblade, (blade11.x - 20, blade11.y))
         screen.blit(realblade1, (blade1.x - 20, blade1.y))
         screen.blit(realblade12, (blade12.x - 20, blade12.y))
@@ -694,7 +891,7 @@ while gameActivate:
         if (a == 7):
             screen.blit(realfront, (rct.x + 5, rct.y))
         if (rct.colliderect(endingpoints)):
-            number = 2
+            number = 3
         clock.tick(50)
         pygame.display.update()
 
@@ -702,19 +899,48 @@ while gameActivate:
     pygame.init()
     pygame.mixer.init()
     screen = pygame.display.set_mode((width, height))
-    pygame.display.set_caption("level 2")
-    clock = pygame.time.Clock()
 
     background = pygame.image.load(os.path.join(img_folder, "back2.png")).convert()
     background = pygame.transform.scale(background, (500, 500))
     background_rect = background.get_rect()
     Bullets = pygame.image.load(os.path.join(img_folder, "laserGreen.png")).convert()
     clock.tick(1)
-
     score = 0
     round(score, 2)
-    message = "        your goal is 10000 points !"
-    while number == 2:
+    message = "        your goal is 9000 points !"
+    subtitle = True
+    count = 0
+    subtitle1 = True
+    while number == 3:
+        while (subtitle):
+            screen.fill((0, 0, 0))
+            for event in pygame.event.get():
+
+                if event.type == pygame.QUIT:
+                    number = 5
+                    gameActivate = False
+                    subtitle = False
+                    subtitle1 = False
+                    break
+                elif event.type == pygame.KEYDOWN:
+                    if count >=2 :
+                        subtitle = False
+                        break
+                    if event.key == pygame.K_2:
+                        count += 1
+            screen.blit(background, background_rect)
+            screen.blit(realcar, (background_rect.x + 200, background_rect.y + 200))
+            if (count == 0):
+                draw_text(screen, "this evil still keep chasimg me my gosh!!!(press 2 to cotinue)", 20, 250, 450)
+            if (count == 1):
+                draw_text(screen, "how to get rid of them", 20, 250, 450)
+            if (count == 2):
+                draw_text(screen, "i found a gun in the car!!!(press space to shoot and press 1 to contunue)", 15, 250,
+                          450)
+
+            pygame.display.update()
+        if (subtitle1 is False):
+            continue
         if game_not_start:
             game_not_start = False
 
@@ -736,14 +962,14 @@ while gameActivate:
         clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                number = 3
+                number = 5
                 gameActivate = False
                 break
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     player.shoot()
                 if event.key == pygame.K_ESCAPE:
-                    number = 3
+                    number = 5
                     gameActivate = False
                     break
 
@@ -786,7 +1012,7 @@ while gameActivate:
             clock.tick(1)
             game_not_start = True
 
-        if score >= 10000:
+        if score >= 9050:
             clock.tick(1)
             show_youwin_screen()
             number = 0
@@ -799,3 +1025,14 @@ while gameActivate:
         draw_shield_bar(screen, 5, 5, player.shield)
         draw_text(screen, "score:     " + str(round(score, 2)) + message, 18, width / 2, 10)
         pygame.display.flip()
+
+    car = pygame.image.load("car.png")
+    realcar = pygame.transform.scale(car, (40, 80)).convert_alpha()
+    carrier = realcar.get_rect(center=(250, 60))
+    floor = pygame.image.load("floor.jpg").convert_alpha()
+    background = pygame.transform.scale(floor, (500, 500))
+    background_rect = background.get_rect()
+    rct = pygame.Rect((250, 50), (10, 20))
+    rct1 = pygame.Rect((400, 50), (10, 20))
+    count = 0
+    activate = True
